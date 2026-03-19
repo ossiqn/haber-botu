@@ -1,0 +1,316 @@
+================================================================================
+        🤖 OTOMATIK HABER BOTU - WORDPRESS & TELEGRAM
+================================================================================
+
+📋 ÖZET
+--------
+50+ Türk haber sitesinden (TRT, NTV, Webtekno, Bloomberg vb.) anlık haber 
+çeken, önem sırasına göre (acil haberler önce) sıralayan, tekrar kontrolü 
+yapan, resimli yayınlayan, WordPress'e post veya Telegram kanalına mesaj 
+olarak 3-6 dakika aralıklarla otomatik gönderen, 7 kategorili (Teknoloji, 
+Ekonomi, Spor, Magazin, Dünya, Sağlık, Gündem), tamamen özelleştirilebilir, 
+7/24 çalışan profesyonel haber botu sistemi.
+
+
+================================================================================
+✨ ÖZELLİKLER
+================================================================================
+
+🎯 AKILLI ÖNCELİKLENDİRME SİSTEMİ
+---------------------------------
+  🚨 ACİL (100+ puan)
+     → Vefat, deprem, patlama, yangın, terör, kaza
+     → En önce bunlar yayınlanır
+     
+  🔴 ÖNEMLİ (50+ puan)
+     → Cumhurbaşkanı, bakan, seçim, dolar, faiz, operasyon
+     
+  📰 GÜNDEM (25+ puan)
+     → Ankara, İstanbul, TBMM, siyasi partiler
+     
+  ⏰ YENİLİK PUANI
+     → Son 30 dakikada çıkan haberler +20 puan alır
+
+
+📰 50+ HABER KAYNAĞI
+--------------------
+  ┌─ Genel Haberler (Öncelik: Yüksek)
+  │  • TRT Haber, NTV (🔴 En öncelikli)
+  │  • Hürriyet, Sözcü, Cumhuriyet (📰 Öncelikli)
+  │
+  ├─ Ekonomi (Öncelik: Orta)
+  │  • Bloomberg HT, NTV Ekonomi (💰)
+  │
+  ├─ Teknoloji (Öncelik: Normal)
+  │  • Webtekno, ShiftDelete, Technopat, Chip Online (💻)
+  │
+  ├─ Spor (Öncelik: Normal)
+  │  • NTV Spor, Fanatik, Fotomac (⚽)
+  │
+  ├─ Dünya Haberleri (Öncelik: Yüksek)
+  │  • BBC Türkçe, DW Türkçe (🌍)
+  │
+  └─ Sağlık & Magazin
+     • NTV Sağlık (🏥), Hürriyet Magazin (🎬)
+
+
+🔥 GELİŞMİŞ ÖZELLİKLER
+-----------------------
+
+  ✅ %100 TEKRAR ENGELLEME
+     • Hash kontrolü (başlık MD5)
+     • URL kontrolü
+     • Veritabanında kayıt tutma
+     • 5000+ haber geçmişi
+
+  ⚡ AKILLI ZAMANLAMA
+     • 3-6 dakika arası rastgele bekleme
+     • Spam önleme
+     • Rate limiting
+     • Otomatik yeniden deneme
+
+  🖼️ GÖRSEL YÖNETİMİ
+     • Otomatik resim çekme (RSS, NewsAPI)
+     • WordPress: Medya kütüphanesine yükleme
+     • Telegram: Resimli mesaj gönderme
+     • Resim bulunamazsa metin mesaj
+
+  📊 7 KATEGORİ DESTEĞİ
+     1. 📰 Gündem      (En yüksek öncelik)
+     2. 🌍 Dünya       (Yüksek öncelik)
+     3. 💰 Ekonomi     (Orta öncelik)
+     4. 💻 Teknoloji   (Normal öncelik)
+     5. ⚽ Spor        (Normal öncelik)
+     6. 🏥 Sağlık      (Düşük öncelik)
+     7. 🎬 Magazin     (En düşük öncelik)
+
+  🧠 AKILLI KATEGORİ ALGILAMA
+     • Anahtar kelime analizi
+     • Otomatik kategori belirleme
+     • Manuel kategori atama seçeneği
+
+  🔧 TAM ÖZELLEŞTİRİLEBİLİR
+     {
+       maxHaberPerRun: 2,        // Her çalıştırmada kaç haber
+       minInterval: 3,           // Min bekleme (dakika)
+       maxInterval: 6,           // Max bekleme (dakika)
+       autoPublish: false,       // Otomatik yayınla (WP)
+       sendImage: true,          // Resim gönder
+       categories: ['genel'...]  // Aktif kategoriler
+     }
+
+  📈 İSTATİSTİK SİSTEMİ
+     • Toplam çekilen haber
+     • Toplam yayınlanan haber
+     • Tekrar sayısı
+     • Hata sayısı
+     • Kaynak bazlı istatistik
+     • Kategori bazlı istatistik
+
+  🛡️ GÜVENLİK & STABİLİTE
+     • SSL hatalarını bypass
+     • Timeout yönetimi
+     • Otomatik hata yakalama
+     • Log sistemi
+     • Database backup
+
+  💾 VERİTABANI SİSTEMİ
+     • JSON tabanlı
+     • Otomatik temizlik (5000+ kayıt)
+     • Geçmiş kayıtları
+     • İstatistik tutma
+
+
+================================================================================
+🚀 KURULUM
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ WORDPRESS BOTU (Node.js)                                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+  Kurulum:
+    npm install axios rss-parser cheerio
+    node wordpress-bot.js
+
+  Gereksinimler:
+    ✓ Node.js 14+
+    ✓ WordPress 5.0+
+    ✓ REST API aktif
+    ✓ Uygulama Şifresi
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ TELEGRAM BOTU (Python)                                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+  Kurulum:
+    pip install requests feedparser beautifulsoup4 schedule
+    python telegram-bot.py
+
+  Gereksinimler:
+    ✓ Python 3.7+
+    ✓ Telegram Bot Token
+    ✓ Kanal Admin yetkisi
+
+
+================================================================================
+⚙️ YAPILANDIRMA
+================================================================================
+
+▸ WORDPRESS BOT
+-----------------
+  const bot = new WordPressHaberBotu({
+      wordpressUrl: 'https://siteninadresi.com',
+      wpUsername: 'admin',
+      wpAppPassword: 'xxxx xxxx xxxx xxxx',
+      newsApiKey: '856ec0c76ffd4384a6ba17a6fb2b0c26',
+      maxHaberPerRun: 2,
+      autoPublish: false,    // true = direkt yayınla
+      sendImage: true,
+      minInterval: 3,
+      maxInterval: 6
+  });
+
+
+▸ TELEGRAM BOT
+---------------
+  bot = TelegramHaberBotu({
+      'telegramToken': '1234567890:ABCdefGHI...',
+      'chatId': '-1001234567890',
+      'newsApiKey': '856ec0c76ffd4384a6ba17a6fb2b0c26',
+      'maxHaberPerRun': 2,
+      'sendImage': True,
+      'addHashtags': True,
+      'minInterval': 3,
+      'maxInterval': 6
+  })
+
+
+================================================================================
+📊 ÇALIŞMA ÖRNEĞİ
+================================================================================
+
+  🚀 Haber botu başlatılıyor...
+
+  📡 50+ kaynaktan haber çekiliyor...
+  ✅ TRT Haber - 15 haber
+  ✅ NTV - 12 haber
+  ✅ Webtekno - 8 haber
+  ...
+
+  📊 87 benzersiz haber bulundu
+
+  🎯 En önemli 5 haber:
+  1. [175] Ankara'da büyük deprem! 5.8 şiddetinde...
+  2. [125] Cumhurbaşkanı'ndan flaş açıklama...
+  3. [85] Dolar tarihi zirveyi gördü...
+  4. [45] Apple yeni iPhone'u tanıttı...
+  5. [30] Galatasaray transferi bitirdi...
+
+  📤 2 haber yayınlanacak (en önemliden)...
+
+  ✅ [175] Ankara'da büyük deprem! 5.8 şiddetinde...
+  ⏳ 4 dakika 32 saniye bekleniyor...
+  ✅ [125] Cumhurbaşkanı'ndan flaş açıklama...
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ Başarılı: 2
+  ❌ Başarısız: 0
+  🔄 Tekrar: 15
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+================================================================================
+🎁 EK ÖZELLİKLER
+================================================================================
+
+┌─ WORDPRESS
+│  ✅ SEO uyumlu slug
+│  ✅ Öne çıkan görsel
+│  ✅ Kategori otomasyonu
+│  ✅ Taslak/Yayın seçimi
+│  ✅ Meta bilgileri
+│
+└─ TELEGRAM
+   ✅ HTML formatında mesaj
+   ✅ Hashtag desteği
+   ✅ Emoji önceliklendirme
+   ✅ Link önizleme
+   ✅ Resimli caption
+
+
+================================================================================
+💡 KULLANIM SENARYOLARI
+================================================================================
+
+  ▸ HABER SİTESİ (WordPress)
+    • Her 5 dakikada 2 haber otomatik
+    • Günde 500+ haber içerik
+    • Manuel onay sonrası yayın
+    • SEO trafiği artışı
+
+  ▸ TELEGRAM HABER KANALI
+    • Anlık haber akışı
+    • Takipçi etkileşimi
+    • Önemli haberleri kaçırma
+    • Otomatik içerik üretimi
+
+  ▸ HİBRİT KULLANIM
+    • Her iki bot birlikte çalışır
+    • Telegram'da anlık, WordPress'te arşiv
+    • Çapraz trafik
+
+
+================================================================================
+📞 DESTEK
+================================================================================
+
+  📧 Kurulum desteği
+  🔧 Özelleştirme hizmeti
+  🚀 Sunucu kurulumu
+  📚 Dokümantasyon
+  🎥 Video eğitim
+
+
+================================================================================
+🏆 AVANTAJLAR
+================================================================================
+
+  ┌──────────────────────┬────────────┬────────────┐
+  │ ÖZELLİK              │   MANUEL   │   BU BOT   │
+  ├──────────────────────┼────────────┼────────────┤
+  │ Günlük haber         │   5-10     │   500+     │
+  │ Zaman                │   8 saat   │   0 saat   │
+  │ Maliyet              │   ₺₺₺      │   ₺        │
+  │ Hata                 │   Var      │   Yok      │
+  │ 7/24 Çalışma         │   Hayır    │   Evet     │
+  │ Önceliklendirme      │   Manuel   │   Otomatik │
+  └──────────────────────┴────────────┴────────────┘
+
+
+================================================================================
+🔒 GÜVENLİK
+================================================================================
+
+  ✅ API şifreleri gizli
+  ✅ SSL sertifika bypass
+  ✅ Rate limiting
+  ✅ Hata yönetimi
+  ✅ Log kayıtları
+
+
+================================================================================
+💬 SONUÇ
+================================================================================
+
+İster WordPress sitenize, ister Telegram kanalınıza, önem sırasına göre 
+(deprem/vefat gibi acil haberler önce, magazin haberleri son) otomatik 
+haber akışı sağlar. 
+
+7/24 çalışır, siz hiçbir şey yapmazsınız! 🔥
+
+
+================================================================================
+© 2024 - Otomatik Haber Botu Sistemi
+================================================================================
