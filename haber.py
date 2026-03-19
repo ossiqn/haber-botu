@@ -1,15 +1,15 @@
 import os
 import json
 import time
-import random
 import hashlib
 import requests
 import feedparser
 from datetime import datetime
 from bs4 import BeautifulSoup
-import schedule
 import logging
 import urllib3
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -35,17 +35,24 @@ class TelegramHaberBotu:
             },
             'database': config.get('dbPath', 'telegram_haber_db.json'),
             'settings': {
-                'max_haber_per_run': config.get('maxHaberPerRun', 2),
-                'send_delay': config.get('sendDelay', 3),
+                'haber_per_batch': config.get('haberPerBatch', 3),
+                'batch_interval': config.get('batchInterval', 2),
+                'message_delay': config.get('messageDelay', 5),
                 'send_image': config.get('sendImage', True),
                 'add_hashtags': config.get('addHashtags', True),
-                'duplicate_check': config.get('duplicateCheck', True),
-                'min_interval': config.get('minInterval', 3),
-                'max_interval': config.get('maxInterval', 6)
+                'duplicate_check': config.get('duplicateCheck', True)
             }
         }
         
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session = requests.Session()
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
         self.session.verify = False
         
         self.telegram_api = f"https://api.telegram.org/bot{self.config['telegram']['token']}"
@@ -73,20 +80,17 @@ class TelegramHaberBotu:
             'teknoloji': [
                 {'name': 'Webtekno', 'url': 'https://www.webtekno.com/rss.xml', 'emoji': '💻', 'priority': 4},
                 {'name': 'ShiftDelete', 'url': 'https://shiftdelete.net/feed', 'emoji': '💻', 'priority': 4},
-                {'name': 'Technopat', 'url': 'https://www.technopat.net/feed/', 'emoji': '💻', 'priority': 4},
-                {'name': 'Chip Online', 'url': 'https://www.chip.com.tr/rss', 'emoji': '💻', 'priority': 4}
+                {'name': 'Technopat', 'url': 'https://www.technopat.net/feed/', 'emoji': '💻', 'priority': 4}
             ],
             'spor': [
                 {'name': 'NTV Spor', 'url': 'https://www.ntvspor.net/son-dakika.rss', 'emoji': '⚽', 'priority': 5},
-                {'name': 'Fanatik', 'url': 'https://www.fanatik.com.tr/rss', 'emoji': '⚽', 'priority': 5},
-                {'name': 'Fotomac', 'url': 'https://www.fotomac.com.tr/rss', 'emoji': '⚽', 'priority': 5}
+                {'name': 'Fanatik', 'url': 'https://www.fanatik.com.tr/rss', 'emoji': '⚽', 'priority': 5}
             ],
             'magazin': [
                 {'name': 'Hürriyet Magazin', 'url': 'https://www.hurriyet.com.tr/rss/magazin', 'emoji': '🎬', 'priority': 7}
             ],
             'dunya': [
-                {'name': 'BBC Türkçe', 'url': 'https://feeds.bbci.co.uk/turkce/rss.xml', 'emoji': '🌍', 'priority': 2},
-                {'name': 'DW Türkçe', 'url': 'https://rss.dw.com/xml/rss-tur-all', 'emoji': '🌍', 'priority': 2}
+                {'name': 'BBC Türkçe', 'url': 'https://feeds.bbci.co.uk/turkce/rss.xml', 'emoji': '🌍', 'priority': 2}
             ],
             'saglik': [
                 {'name': 'NTV Sağlık', 'url': 'https://www.ntv.com.tr/saglik.rss', 'emoji': '🏥', 'priority': 6}
@@ -104,9 +108,9 @@ class TelegramHaberBotu:
         }
         
         self.importance_keywords = {
-            'acil': ['vefat', 'öldü', 'hayatını kaybetti', 'deprem', 'patlama', 'yangın', 'saldırı', 'çatışma', 'bomba', 'terör', 'kaza', 'yaralandı', 'sel', 'afet', 'acil durum', 'şehit'],
-            'onemli': ['cumhurbaşkanı', 'başbakan', 'bakan', 'meclis', 'seçim', 'dolar', 'faiz', 'enflasyon', 'kriz', 'tcmb', 'operasyon', 'gözaltı', 'tutuklama', 'yasa', 'karar', 'açıklama'],
-            'gundem': ['ankara', 'istanbul', 'tbmm', 'anayasa mahkemesi', 'yargıtay', 'danıştay', 'chp', 'ak parti', 'mhp', 'hdp', 'iyi parti']
+            'acil': ['vefat', 'öldü', 'hayatını kaybetti', 'deprem', 'patlama', 'yangın', 'saldırı', 'çatışma', 'bomba', 'terör', 'kaza', 'yaralandı', 'sel', 'afet', 'şehit'],
+            'onemli': ['cumhurbaşkanı', 'başbakan', 'bakan', 'meclis', 'seçim', 'dolar', 'faiz', 'enflasyon', 'kriz', 'tcmb', 'operasyon', 'gözaltı'],
+            'gundem': ['ankara', 'istanbul', 'tbmm', 'anayasa mahkemesi', 'chp', 'ak parti', 'mhp']
         }
 
     def load_database(self):
@@ -153,6 +157,12 @@ class TelegramHaberBotu:
             return ''
         
         try:
+            if 'Ä' in text or 'Ã' in text:
+                text = text.encode('cp1254').decode('utf-8', errors='ignore')
+        except:
+            pass
+        
+        try:
             text = text.encode('latin1').decode('utf-8', errors='ignore')
         except:
             pass
@@ -162,21 +172,33 @@ class TelegramHaberBotu:
         cleaned = cleaned.replace('\xa0', ' ').replace('\n', ' ').replace('\r', ' ')
         cleaned = ' '.join(cleaned.split())
         
+        replacements = {
+            'Ä±': 'ı', 'ÄŸ': 'ğ', 'Ã§': 'ç', 'Ã¶': 'ö', 'Ã¼': 'ü', 'ÅŸ': 'ş',
+            'Ä°': 'İ', 'Ã‡': 'Ç', 'Ã–': 'Ö', 'Ãœ': 'Ü',
+            'BakanlÄ±ÄŸÄ±': 'Bakanlığı', 'DepartmanÄ±': 'Departmanı',
+            'DirektÃ¶rÃ¼': 'Direktörü', 'fiyatlarÄ±n': 'fiyatların',
+            'yÃ¼kselmesi': 'yükselmesi', 'Rusya\'nÄ±n': 'Rusya\'nın',
+            'ihracatÄ±na': 'ihracatına', 'hÄ±zlÄ±ca': 'hızlıca',
+            'getirebileceÄŸini': 'getirebileceğini', 'sÃ¶yledi': 'söyledi',
+            'Ã§arpÄ±ÅŸtÄ±ÄŸÄ±': 'çarpıştığı', 'Ã§arpÄ±ÅŸmasÄ±': 'çarpışması',
+            'kiÅŸi': 'kişi', 'hayatÄ±nÄ±': 'hayatını', 'Ã¶ldÃ¼': 'öldü'
+        }
+        
+        for wrong, correct in replacements.items():
+            cleaned = cleaned.replace(wrong, correct)
+        
         return cleaned
 
     def calculate_importance(self, haber):
         text = (haber.get('baslik', '') + ' ' + haber.get('ozet', '')).lower()
-        
         importance_score = 0
         
         for keyword in self.importance_keywords['acil']:
             if keyword in text:
                 importance_score += 100
-        
         for keyword in self.importance_keywords['onemli']:
             if keyword in text:
                 importance_score += 50
-        
         for keyword in self.importance_keywords['gundem']:
             if keyword in text:
                 importance_score += 25
@@ -188,8 +210,7 @@ class TelegramHaberBotu:
         elif haber.get('kategori') == 'ekonomi':
             importance_score += 5
         
-        source_priority = haber.get('source_priority', 5)
-        importance_score += (10 - source_priority) * 3
+        importance_score += (10 - haber.get('source_priority', 5)) * 3
         
         time_diff = self.get_time_diff(haber.get('tarih'))
         if time_diff < 30:
@@ -203,11 +224,9 @@ class TelegramHaberBotu:
         try:
             if not date_str:
                 return 9999
-            
             pub_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
             now = datetime.now(pub_date.tzinfo)
-            diff = (now - pub_date).total_seconds() / 60
-            return diff
+            return (now - pub_date).total_seconds() / 60
         except:
             return 9999
 
@@ -245,18 +264,16 @@ class TelegramHaberBotu:
             return True
         return False
 
-    def fetch_newsapi(self, category='general'):
+    def fetch_newsapi(self):
         try:
             url = f"{self.config['newsapi']['base_url']}/top-headlines"
             params = {
                 'country': 'tr',
-                'category': category,
                 'pageSize': 20,
                 'apiKey': self.config['newsapi']['key']
             }
             
             response = self.session.get(url, params=params, timeout=15, verify=False)
-            response.encoding = 'utf-8'
             data = response.json()
             
             if data.get('status') == 'ok' and 'articles' in data:
@@ -265,7 +282,7 @@ class TelegramHaberBotu:
                     if not article or not article.get('title'):
                         continue
                     
-                    haber = {
+                    haberler.append({
                         'baslik': self.clean_text(article['title']),
                         'ozet': self.clean_text(article.get('description', '')),
                         'link': article.get('url', ''),
@@ -274,23 +291,17 @@ class TelegramHaberBotu:
                         'tarih': article.get('publishedAt', datetime.now().isoformat()),
                         'kategori': self.detect_category(article['title']),
                         'hash': self.generate_hash(article['title']),
-                        'api': 'NewsAPI',
                         'source_priority': 1
-                    }
-                    haberler.append(haber)
-                
+                    })
                 return haberler
         except Exception as e:
             logging.error(f'NewsAPI hatası: {e}')
-        
         return []
 
     def fetch_rss(self, source):
         try:
             response = self.session.get(source['url'], timeout=15, verify=False)
-            response.encoding = 'utf-8'
             feed = feedparser.parse(response.content)
-            
             haberler = []
             
             for item in feed.entries[:15]:
@@ -301,16 +312,8 @@ class TelegramHaberBotu:
                 try:
                     if hasattr(item, 'media_content') and item.media_content:
                         resim = item.media_content[0].get('url')
-                    elif hasattr(item, 'media_thumbnail') and item.media_thumbnail:
-                        resim = item.media_thumbnail[0].get('url')
                     elif hasattr(item, 'enclosures') and item.enclosures:
                         resim = item.enclosures[0].get('href')
-                    
-                    if not resim and hasattr(item, 'content'):
-                        soup = BeautifulSoup(item.content[0].value, 'html.parser')
-                        img = soup.find('img')
-                        if img:
-                            resim = img.get('src')
                     
                     if not resim and hasattr(item, 'summary'):
                         soup = BeautifulSoup(item.summary, 'html.parser')
@@ -320,7 +323,7 @@ class TelegramHaberBotu:
                 except:
                     pass
                 
-                haber = {
+                haberler.append({
                     'baslik': self.clean_text(item.title),
                     'ozet': self.clean_text(getattr(item, 'summary', '')),
                     'link': getattr(item, 'link', ''),
@@ -330,41 +333,25 @@ class TelegramHaberBotu:
                     'kategori': self.detect_category(item.title),
                     'hash': self.generate_hash(item.title),
                     'emoji': source.get('emoji', '📰'),
-                    'api': 'RSS',
                     'source_priority': source.get('priority', 5)
-                }
-                haberler.append(haber)
+                })
             
             return haberler
         except Exception as e:
             logging.error(f"RSS hatası ({source['name']}): {e}")
-        
         return []
 
-    def fetch_all_rss(self, categories=None):
-        all_haberler = []
-        target_categories = categories if categories else list(self.rss_kaynaklari.keys())
-        
-        for category in target_categories:
-            if category in self.rss_kaynaklari:
-                for source in self.rss_kaynaklari[category]:
-                    haberler = self.fetch_rss(source)
-                    all_haberler.extend(haberler)
-                    time.sleep(0.5)
-        
-        return all_haberler
-
-    def fetch_all_sources(self, options=None):
-        options = options or {}
+    def fetch_all_sources(self):
         all_haberler = []
         
-        if options.get('newsapi', True):
-            newsapi_haberler = self.fetch_newsapi()
-            all_haberler.extend(newsapi_haberler)
+        newsapi_haberler = self.fetch_newsapi()
+        all_haberler.extend(newsapi_haberler)
         
-        if options.get('rss', True):
-            rss_haberler = self.fetch_all_rss(options.get('categories'))
-            all_haberler.extend(rss_haberler)
+        for category in self.rss_kaynaklari.values():
+            for source in category:
+                haberler = self.fetch_rss(source)
+                all_haberler.extend(haberler)
+                time.sleep(0.3)
         
         return self.process_haberler(all_haberler)
 
@@ -384,30 +371,21 @@ class TelegramHaberBotu:
                 continue
             
             haber['importance_score'] = self.calculate_importance(haber)
-            
             seen_hashes.add(haber['hash'])
             processed.append(haber)
         
         processed.sort(key=lambda x: x['importance_score'], reverse=True)
-        
         self.stats['total_fetched'] += len(processed)
-        
-        logging.info(f'\n🎯 En önemli 5 haber:')
-        for i, haber in enumerate(processed[:5], 1):
-            logging.info(f"{i}. [{haber['importance_score']}] {haber['baslik'][:60]}...")
-        
         return processed
 
     def format_message(self, haber):
         emoji = haber.get('emoji', '📰')
-        
         if haber['importance_score'] >= 100:
             emoji = '🚨'
         elif haber['importance_score'] >= 50:
             emoji = '🔴'
         
         hashtags = ''
-        
         if self.config['settings']['add_hashtags']:
             category_tags = self.category_hashtags.get(haber['kategori'], self.category_hashtags['genel'])
             hashtags = ' '.join(category_tags[:3])
@@ -429,6 +407,7 @@ class TelegramHaberBotu:
     def send_to_telegram(self, haber):
         try:
             message = self.format_message(haber)
+            url = f"{self.telegram_api}/sendMessage"
             
             if self.config['settings']['send_image'] and haber.get('resim'):
                 try:
@@ -452,7 +431,6 @@ class TelegramHaberBotu:
                     response = self.session.post(url, data=data, timeout=30, verify=False)
                     response.raise_for_status()
             else:
-                url = f"{self.telegram_api}/sendMessage"
                 data = {
                     'chat_id': self.config['telegram']['chat_id'],
                     'text': message,
@@ -465,145 +443,64 @@ class TelegramHaberBotu:
             self.database['sent_hashes'].append(haber['hash'])
             self.database['sent_urls'].append(haber['link'])
             self.database['total_sent'] += 1
-            self.database['history'].append({
-                'title': haber['baslik'],
-                'sent_at': datetime.now().isoformat(),
-                'category': haber['kategori'],
-                'source': haber['kaynak'],
-                'importance_score': haber['importance_score']
-            })
             self.database['last_update'] = datetime.now().isoformat()
             self.save_database()
             
             self.stats['total_sent'] += 1
             logging.info(f"✅ [{haber['importance_score']}] {haber['baslik'][:50]}...")
-            return {'success': True}
+            return True
         except Exception as e:
             self.stats['total_errors'] += 1
             logging.error(f"❌ Telegram hatası: {e}")
-            return {'success': False, 'error': str(e)}
+            return False
 
-    def send_multiple(self, haberler):
-        results = []
-        
-        for i, haber in enumerate(haberler):
-            result = self.send_to_telegram(haber)
-            results.append({'haber': haber['baslik'], **result})
-            
-            if result['success'] and i < len(haberler) - 1:
-                random_delay = random.randint(
-                    self.config['settings']['min_interval'] * 60,
-                    self.config['settings']['max_interval'] * 60
-                )
-                logging.info(f"⏳ {random_delay // 60} dakika {random_delay % 60} saniye bekleniyor...")
-                time.sleep(random_delay)
-        
-        return results
-
-    def run(self, options=None):
-        logging.info('🚀 Telegram haber botu başlatılıyor...\n')
-        
-        haberler = self.fetch_all_sources(options)
-        
-        logging.info(f'📊 {len(haberler)} benzersiz haber bulundu (öncelik sırasına göre)\n')
-        
-        if haberler:
-            limit = options.get('limit', self.config['settings']['max_haber_per_run']) if options else self.config['settings']['max_haber_per_run']
-            to_send = haberler[:limit]
-            
-            logging.info(f'📤 {len(to_send)} haber gönderilecek (en önemliden başlayarak)...\n')
-            results = self.send_multiple(to_send)
-            
-            successful = sum(1 for r in results if r['success'])
-            failed = sum(1 for r in results if not r['success'])
-            
-            logging.info(f"\n✅ Başarılı: {successful}")
-            logging.info(f"❌ Başarısız: {failed}")
-            logging.info(f"🔄 Tekrar: {self.stats['total_duplicates']}")
-        
-        return {
-            'fetched': self.stats['total_fetched'],
-            'sent': self.stats['total_sent'],
-            'duplicates': self.stats['total_duplicates'],
-            'errors': self.stats['total_errors']
-        }
-
-    def scheduled_run(self, options=None):
-        logging.info('\n' + '='*50)
-        logging.info('🔄 Zamanlanmış görev çalışıyor...')
-        logging.info(f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        logging.info('='*50)
-        
-        try:
-            self.run(options)
-        except Exception as e:
-            logging.error(f'❌ Hata: {e}')
-
-    def start_scheduler(self, options=None):
-        logging.info('⏰ Zamanlayıcı başlatıldı: İlk görev hemen çalışıyor\n')
-        
-        self.scheduled_run(options)
-        
-        logging.info('\n✅ Bot 7/24 çalışmaya devam ediyor...')
-        logging.info('🛑 Durdurmak için CTRL+C yapın\n')
+    def run_forever(self):
+        logging.info('🚀 Bot başlatıldı - SÜREKLI çalışacak!')
+        logging.info(f'⏰ Her {self.config["settings"]["batch_interval"]} dakikada {self.config["settings"]["haber_per_batch"]} haber\n')
         
         while True:
-            time.sleep(60)
-
-    def test_connection(self):
-        logging.info('🔍 Bağlantı test ediliyor...\n')
-        
-        results = {'telegram': False, 'newsapi': False}
-        
-        try:
-            url = f"{self.telegram_api}/getMe"
-            response = self.session.get(url, timeout=10, verify=False)
-            data = response.json()
-            if data.get('ok'):
-                logging.info(f"✅ Telegram Bot: @{data['result']['username']}")
-                results['telegram'] = True
-        except Exception as e:
-            logging.error(f'❌ Telegram hatası: {e}')
-        
-        try:
-            url = f"{self.config['newsapi']['base_url']}/top-headlines"
-            params = {
-                'country': 'tr',
-                'pageSize': 1,
-                'apiKey': self.config['newsapi']['key']
-            }
-            response = self.session.get(url, params=params, timeout=10, verify=False)
-            data = response.json()
-            if data.get('status') == 'ok':
-                logging.info('✅ NewsAPI: Çalışıyor')
-                results['newsapi'] = True
-        except Exception as e:
-            logging.error(f'❌ NewsAPI hatası: {e}')
-        
-        logging.info('')
-        return results
+            try:
+                logging.info('\n' + '='*50)
+                logging.info(f'🔄 {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+                logging.info('='*50)
+                
+                haberler = self.fetch_all_sources()
+                logging.info(f'📊 {len(haberler)} haber bulundu\n')
+                
+                if haberler:
+                    to_send = haberler[:self.config['settings']['haber_per_batch']]
+                    logging.info(f'📤 {len(to_send)} haber gönderiliyor...\n')
+                    
+                    for i, haber in enumerate(to_send):
+                        success = self.send_to_telegram(haber)
+                        if success and i < len(to_send) - 1:
+                            time.sleep(self.config['settings']['message_delay'])
+                    
+                    logging.info(f'\n📊 Toplam: {self.database["total_sent"]} haber gönderildi')
+                else:
+                    logging.info('❌ Yeni haber yok\n')
+                
+                logging.info(f'⏳ {self.config["settings"]["batch_interval"]} dakika bekleniyor...\n')
+                time.sleep(self.config['settings']['batch_interval'] * 60)
+                
+            except KeyboardInterrupt:
+                logging.info('\n\n🛑 Bot durduruldu!')
+                break
+            except Exception as e:
+                logging.error(f'❌ Hata: {e}')
+                logging.info('⏳ 30 saniye sonra tekrar deneniyor...\n')
+                time.sleep(30)
 
 if __name__ == '__main__':
     bot = TelegramHaberBotu({
-        'telegramToken': 'bot tokenin',
-        'chatId': 'KANAL ID',
+        'telegramToken': '8792482220:AAFsn2Enii2QqVWzv4G5TOKlE25tAAYxwug',
+        'chatId': '-1003892722496',
         'newsApiKey': '856ec0c76ffd4384a6ba17a6fb2b0c26',
-        'maxHaberPerRun': 2,
-        'sendDelay': 3,
+        'haberPerBatch': 3,
+        'batchInterval': 2,
+        'messageDelay': 5,
         'sendImage': True,
-        'addHashtags': True,
-        'minInterval': 3,
-        'maxInterval': 6
+        'addHashtags': True
     })
     
-    test = bot.test_connection()
-    
-    if test['telegram'] and test['newsapi']:
-        bot.start_scheduler({
-            'newsapi': True,
-            'rss': True,
-            'categories': ['genel', 'teknoloji', 'ekonomi', 'spor', 'dunya', 'magazin', 'saglik'],
-            'limit': 2
-        })
-    else:
-        logging.error('\n❌ Bağlantı hatası! Ayarları kontrol et.')
+    bot.run_forever()
