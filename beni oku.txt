@@ -89,76 +89,66 @@ Ekonomi, Spor, Magazin, Dünya, Sağlık, Gündem), tamamen özelleştirilebilir
      • Otomatik kategori belirleme
      • Manuel kategori atama seçeneği
 
-  🔧 TAM ÖZELLEŞTİRİLEBİLİR
-     {
-       maxHaberPerRun: 2,        // Her çalıştırmada kaç haber
-       minInterval: 3,           // Min bekleme (dakika)
-       maxInterval: 6,           // Max bekleme (dakika)
-       autoPublish: false,       // Otomatik yayınla (WP)
-       sendImage: true,          // Resim gönder
-       categories: ['genel'...]  // Aktif kategoriler
-     }
+ordPress haber botunu kurmak için aşağıdaki adımları takip edin:
 
-  📈 İSTATİSTİK SİSTEMİ
-     • Toplam çekilen haber
-     • Toplam yayınlanan haber
-     • Tekrar sayısı
-     • Hata sayısı
-     • Kaynak bazlı istatistik
-     • Kategori bazlı istatistik
+1. WordPress Kurulumu
 
-  🛡️ GÜVENLİK & STABİLİTE
-     • SSL hatalarını bypass
-     • Timeout yönetimi
-     • Otomatik hata yakalama
-     • Log sistemi
-     • Database backup
+WordPress'i kurmak için bir web sunucusuna (örneğin, Apache, Nginx) ve bir veritabanına (örneğin, MySQL, PostgreSQL) ihtiyacınız olacak.
+WordPress'i indirin ve web sunucunuza yükleyin.
+Veritabanını oluşturun ve WordPress'i kurun.
+2. WordPress API Eklentisi Kurulumu
 
-  💾 VERİTABANI SİSTEMİ
-     • JSON tabanlı
-     • Otomatik temizlik (5000+ kayıt)
-     • Geçmiş kayıtları
-     • İstatistik tutma
+WordPress API eklentisini indirin ve WordPress'e yükleyin.
+Eklentiyi etkinleştirin ve API anahtarınızı oluşturun.
+3. Haber Botu Kurulumu
 
+Haber botu dosyalarını indirin ve bir klasöre yükleyin.
+config.js dosyasını düzenleyin ve WordPress API anahtarınızı, haber botu ayarlarınızı girin.
+npm install komutunu çalıştırın ve gereken paketleri yükleyin.
+4. Haber Botu Ayarları
 
-================================================================================
-🚀 KURULUM
-================================================================================
+config.js dosyasını düzenleyin ve haber botu ayarlarınızı girin.
+Haber botu kaynaklarını (örneğin, NewsAPI, RSS) ayarlayın.
+Haber botu kategorilerini (örneğin, genel, teknoloji, ekonomi) ayarlayın.
+5. Haber Botu Çalıştırma
 
-┌─────────────────────────────────────────────────────────────────────┐
-│ WORDPRESS BOTU (Node.js)                                            │
-└─────────────────────────────────────────────────────────────────────┘
+node index.js komutunu çalıştırın ve haber botunu çalıştırın.
+Haber botu, haberleri toplamak ve WordPress'e göndermek için çalışmaya başlayacaktır.
+6. Zamanlayıcı Ayarları
 
-  Kurulum:
-    npm install axios rss-parser cheerio
-    node wordpress-bot.js
+Haber botunu belirli aralıklarla çalıştırmak için zamanlayıcı ayarlayın.
+node-cron paketini kullanabilirsiniz.
+7. Güvenlik Ayarları
 
-  Gereksinimler:
-    ✓ Node.js 14+
-    ✓ WordPress 5.0+
-    ✓ REST API aktif
-    ✓ Uygulama Şifresi
+Haber botu için güvenlik ayarlarını yapılandırın.
+API anahtarlarınızı ve haber botu ayarlarınızı güvenli bir şekilde saklayın.
+WordPress API Eklentisi Kurulumu
 
+WordPress API eklentisini kurmak için aşağıdaki adımları takip edin:
+WordPress yönetim paneline gidin.
+Eklentiler > Yeni Eklenti sayfasına gidin.
+Arama alanına "WP REST API" yazın ve aratın.
+WP REST API eklentisini bulun ve yükleyin.
+Eklentiyi etkinleştirin.
+WP REST API > Ayarlar sayfasına gidin.
+API anahtarınızı oluşturun.
+Haber Botu Dosyaları
 
-┌─────────────────────────────────────────────────────────────────────┐
-│ TELEGRAM BOTU (Python)                                              │
-└─────────────────────────────────────────────────────────────────────┘
+Haber botu dosyalarını aşağıdaki gibi düzenleyin:
+config.js: Haber botu ayarlarını girin.
+index.js: Haber botu kodunu düzenleyin.
+package.json: Paket bilgilerini düzenleyin.
+Zamanlayıcı Ayarları
 
-  Kurulum:
-    pip install requests feedparser beautifulsoup4 schedule
-    python telegram-bot.py
+Zamanlayıcı ayarlarını aşağıdaki gibi yapılandırın:
+node-cron paketini kullanın.
+Zamanlayıcı ayarlarını config.js dosyasında yapılandırın.
+Güvenlik Ayarları
 
-  Gereksinimler:
-    ✓ Python 3.7+
-    ✓ Telegram Bot Token
-    ✓ Kanal Admin yetkisi
-
-
-================================================================================
-⚙️ YAPILANDIRMA
-================================================================================
-
-▸ WORDPRESS BOT
+Güvenlik ayarlarını aşağıdaki gibi yapılandırın:
+API anahtarlarınızı güvenli bir şekilde saklayın.
+Haber botu ayarlarınızı güvenli bir şekilde saklayın.
+Not: Bu talimatlar, haber botu kurulumu için genel bir rehberdir. Haber botu kurulumu sırasında oluşabilecek sorunları çözmek için, haber botu kodunu ve WordPress API eklentisini iyice incelemeniz gerekir.▸ WORDPRESS BOT
 -----------------
   const bot = new WordPressHaberBotu({
       wordpressUrl: 'https://siteninadresi.com',
@@ -185,132 +175,3 @@ Ekonomi, Spor, Magazin, Dünya, Sağlık, Gündem), tamamen özelleştirilebilir
       'minInterval': 3,
       'maxInterval': 6
   })
-
-
-================================================================================
-📊 ÇALIŞMA ÖRNEĞİ
-================================================================================
-
-  🚀 Haber botu başlatılıyor...
-
-  📡 50+ kaynaktan haber çekiliyor...
-  ✅ TRT Haber - 15 haber
-  ✅ NTV - 12 haber
-  ✅ Webtekno - 8 haber
-  ...
-
-  📊 87 benzersiz haber bulundu
-
-  🎯 En önemli 5 haber:
-  1. [175] Ankara'da büyük deprem! 5.8 şiddetinde...
-  2. [125] Cumhurbaşkanı'ndan flaş açıklama...
-  3. [85] Dolar tarihi zirveyi gördü...
-  4. [45] Apple yeni iPhone'u tanıttı...
-  5. [30] Galatasaray transferi bitirdi...
-
-  📤 2 haber yayınlanacak (en önemliden)...
-
-  ✅ [175] Ankara'da büyük deprem! 5.8 şiddetinde...
-  ⏳ 4 dakika 32 saniye bekleniyor...
-  ✅ [125] Cumhurbaşkanı'ndan flaş açıklama...
-
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ✅ Başarılı: 2
-  ❌ Başarısız: 0
-  🔄 Tekrar: 15
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-================================================================================
-🎁 EK ÖZELLİKLER
-================================================================================
-
-┌─ WORDPRESS
-│  ✅ SEO uyumlu slug
-│  ✅ Öne çıkan görsel
-│  ✅ Kategori otomasyonu
-│  ✅ Taslak/Yayın seçimi
-│  ✅ Meta bilgileri
-│
-└─ TELEGRAM
-   ✅ HTML formatında mesaj
-   ✅ Hashtag desteği
-   ✅ Emoji önceliklendirme
-   ✅ Link önizleme
-   ✅ Resimli caption
-
-
-================================================================================
-💡 KULLANIM SENARYOLARI
-================================================================================
-
-  ▸ HABER SİTESİ (WordPress)
-    • Her 5 dakikada 2 haber otomatik
-    • Günde 500+ haber içerik
-    • Manuel onay sonrası yayın
-    • SEO trafiği artışı
-
-  ▸ TELEGRAM HABER KANALI
-    • Anlık haber akışı
-    • Takipçi etkileşimi
-    • Önemli haberleri kaçırma
-    • Otomatik içerik üretimi
-
-  ▸ HİBRİT KULLANIM
-    • Her iki bot birlikte çalışır
-    • Telegram'da anlık, WordPress'te arşiv
-    • Çapraz trafik
-
-
-================================================================================
-📞 DESTEK
-================================================================================
-
-  📧 Kurulum desteği
-  🔧 Özelleştirme hizmeti
-  🚀 Sunucu kurulumu
-  📚 Dokümantasyon
-  🎥 Video eğitim
-
-
-================================================================================
-🏆 AVANTAJLAR
-================================================================================
-
-  ┌──────────────────────┬────────────┬────────────┐
-  │ ÖZELLİK              │   MANUEL   │   BU BOT   │
-  ├──────────────────────┼────────────┼────────────┤
-  │ Günlük haber         │   5-10     │   500+     │
-  │ Zaman                │   8 saat   │   0 saat   │
-  │ Maliyet              │   ₺₺₺      │   ₺        │
-  │ Hata                 │   Var      │   Yok      │
-  │ 7/24 Çalışma         │   Hayır    │   Evet     │
-  │ Önceliklendirme      │   Manuel   │   Otomatik │
-  └──────────────────────┴────────────┴────────────┘
-
-
-================================================================================
-🔒 GÜVENLİK
-================================================================================
-
-  ✅ API şifreleri gizli
-  ✅ SSL sertifika bypass
-  ✅ Rate limiting
-  ✅ Hata yönetimi
-  ✅ Log kayıtları
-
-
-================================================================================
-💬 SONUÇ
-================================================================================
-
-İster WordPress sitenize, ister Telegram kanalınıza, önem sırasına göre 
-(deprem/vefat gibi acil haberler önce, magazin haberleri son) otomatik 
-haber akışı sağlar. 
-
-7/24 çalışır, siz hiçbir şey yapmazsınız! 🔥
-
-
-================================================================================
-© 2024 - Otomatik Haber Botu Sistemi
-================================================================================
