@@ -493,8 +493,8 @@ class TelegramHaberBotu:
 
 if __name__ == '__main__':
     bot = TelegramHaberBotu({
-        'telegramToken': '8792482220:AAFsn2Enii2QqVWzv4G5TOKlE25tAAYxwug',
-        'chatId': '-1003892722496',
+        'telegramToken': 'BOTTOKENGIRIN',
+        'chatId': 'CHAT/KANALID',
         'newsApiKey': '856ec0c76ffd4384a6ba17a6fb2b0c26',
         'haberPerBatch': 3,
         'batchInterval': 2,
